@@ -1,4 +1,5 @@
 import os
+import sys
 
 import matplotlib
 matplotlib.use('Agg')
@@ -22,8 +23,9 @@ args = parse_args()
 data_dir = args.path
 annotation_dir = os.path.join(data_dir, 'annotations')
 
-for subset in ['val', 'test', 'train']:
+for subset in ['train']:
     print('converting {} data'.format(subset))
+    sys.stdout.flush()
     # Select corresponding image directory
     image_dir = os.path.join(data_dir, subset)
     # Convert annotations

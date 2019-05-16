@@ -220,7 +220,8 @@ def convert_openimages_subset(annotation_dir, image_dir, subset, return_data=Fal
         annotation_sourcefile = 'test-annotations-bbox.csv'
 
     # Load original annotations
-    print('loading original annotations ...', end='\r')
+    print('loading original annotations ...')
+    sys.stdout.flush()
     with open('{}/{}'.format(annotation_dir, category_sourcefile), 'r', encoding='utf-8') as f:
         csv_f = csv.reader(f)
         original_category_info = []
@@ -239,6 +240,7 @@ def convert_openimages_subset(annotation_dir, image_dir, subset, return_data=Fal
                 continue
             original_image_metadata.append(row)
     print("Image sourcefile: %d out of %d dirty" % (dirty_count, total_count))
+    sys.stdout.flush()
 
     dirty_count = total_count = 0
     with open('{}/{}'.format(annotation_dir, annotation_sourcefile), 'r') as f:
@@ -253,6 +255,7 @@ def convert_openimages_subset(annotation_dir, image_dir, subset, return_data=Fal
             original_annotations.append(row)
     print("Annotation file: %d out of %d dirty" % (dirty_count, total_count))
     print('loading original annotations ... Done')
+    sys.stdout.flush()
 
     # Create dataset class to store annotations
     oi = OpenImages()
