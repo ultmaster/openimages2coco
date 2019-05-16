@@ -1,3 +1,5 @@
+import multiprocessing
+
 import matplotlib
 matplotlib.use('Agg')
 
@@ -111,23 +113,16 @@ def convert_image_annotations(original_image_metadata, image_dir, licenses, mode
     # verbose: 0 = no status info, 1 = progress info every 10 images
     
     if mode == 'parallel':
-        # separate original image metadata into chunks
-        N = 1000 #chunk size
+        N = 1000 # chunk size
         chunks = []
-        for i in range(len(original_image_metadata)//N):
-            # add chunks
-            start_index = i*N+1
-            end_index = (i+1)*N+1
-            chunk = [original_image_metadata[0]] + original_image_metadata[start_index:end_index]
-            chunks.append(chunk)
-        # add remaining images as last chunk
-        chunks.append([original_image_metadata[0]] + original_image_metadata[end_index:])
-        
-        # process images in parallel
-        images_in_chunks = Parallel(n_jobs=-1, verbose=verbose)(delayed(_convert_image_annotation_chunk)
-                                         (chunk, image_dir, licenses, verbose=0)
-                                         for chunk in chunks)
-        # sort chunks back into a single list
+        for i in range(0, len(original_image_metadata), N):
+            chunks.append(original_image_metadata[i:i + N])
+
+        def chunk_helper(image_file_list):
+            return _convert_image_annotation_chunk(image_file_list, image_dir, licenses, verbose=verbose)
+
+        with multiprocessing.Pool(64) as pool:
+            images_in_chunks = pool.map(chunk_helper, chunks)
         images = [chunk[i] for chunk in images_in_chunks for i in range(len(chunk))]
     
     else:
