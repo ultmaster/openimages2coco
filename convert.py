@@ -1,3 +1,5 @@
+import os
+
 import matplotlib
 matplotlib.use('Agg')
 
@@ -23,6 +25,6 @@ annotation_dir = '{}{}'.format(data_dir, 'annotations')
 for subset in ['val', 'test', 'train']:
     print('converting {} data'.format(subset))
     # Select corresponding image directory
-    image_dir = '{}{}'.format(data_dir, subset)
+    image_dir = os.path.join(data_dir, subset)
     # Convert annotations
     utils.convert_openimages_subset(annotation_dir, image_dir, subset)

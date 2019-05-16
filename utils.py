@@ -226,17 +226,29 @@ def convert_openimages_subset(annotation_dir, image_dir, subset, return_data=Fal
         for row in csv_f:
             original_category_info.append(row)
 
+    dirty_count, total_count = 0, 0
     with open('{}/{}'.format(annotation_dir, image_sourcefile), 'r', encoding='utf-8') as f:
         csv_f = csv.reader(f)
         original_image_metadata = []
         for row in csv_f:
+            total_count += 1
+            if not os.path.exists(os.path.join(image_dir, row[0] + ".jpg")):
+                dirty_count += 1
+                continue
             original_image_metadata.append(row)
+    print("Image sourcefile: %d out of %d dirty" % (dirty_count, total_count))
 
+    dirty_count = total_count = 0
     with open('{}/{}'.format(annotation_dir, annotation_sourcefile), 'r') as f:
         csv_f = csv.reader(f)
         original_annotations = []
         for row in csv_f:
+            total_count += 1
+            if not os.path.exists(os.path.join(image_dir, row[0] + ".jpg")):
+                dirty_count += 1
+                continue
             original_annotations.append(row)
+    print("Annotation file: %d out of %d dirty" % (dirty_count, total_count))
     print('loading original annotations ... Done')
 
     # Create dataset class to store annotations
