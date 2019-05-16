@@ -47,7 +47,7 @@ def convert_category_annotations(original_category_info):
     return categories
 
 
-def _convert_image_annotation_chunk(original_image_metadata, image_dir, licenses, verbose=0, idx=0):
+def _convert_image_annotation_chunk(original_image_metadata, image_dir, licenses, verbose, idx):
     # Get dict with license urls
     licenses_by_url_http = _url_to_license(licenses, mode='http')
     licenses_by_url_https = _url_to_license(licenses, mode='https')
@@ -135,7 +135,7 @@ def convert_image_annotations(original_image_metadata, image_dir, licenses, mode
         images = [chunk[i] for chunk in images_in_chunks for i in range(len(chunk))]
 
     else:
-        images = _convert_image_annotation_chunk(original_image_metadata, image_dir, licenses, verbose=verbose)
+        images = _convert_image_annotation_chunk(original_image_metadata, image_dir, licenses, verbose=verbose, idx=0)
 
     return images
 
