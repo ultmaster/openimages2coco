@@ -112,8 +112,8 @@ def _convert_image_annotation_chunk(original_image_metadata, image_dir, licenses
     return images
 
 
-def chunk_helper(image_file_list, image_dir, licenses, verbose):
-    return _convert_image_annotation_chunk(image_file_list, image_dir, licenses, verbose=verbose)
+def chunk_helper(image_file_list, image_dir, licenses, verbose, idx):
+    return _convert_image_annotation_chunk(image_file_list, image_dir, licenses, verbose, idx)
 
 
 def convert_image_annotations(original_image_metadata, image_dir, licenses, mode='parallel', verbose=1):
