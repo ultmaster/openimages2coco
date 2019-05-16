@@ -20,7 +20,7 @@ def parse_args():
 
 args = parse_args()
 data_dir = args.path
-annotation_dir = '{}{}'.format(data_dir, 'annotations')
+annotation_dir = os.path.join(data_dir, 'annotations')
 
 for subset in ['val', 'test', 'train']:
     print('converting {} data'.format(subset))
