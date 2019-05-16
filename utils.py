@@ -1,6 +1,7 @@
 import multiprocessing
 
 import matplotlib
+
 matplotlib.use('Agg')
 
 import os
@@ -12,10 +13,11 @@ import numpy as np
 import skimage.io as io
 from openimages import OpenImages
 
+
 def _url_to_license(licenses, mode='http'):
     # create dict with license urls as 
     # mode is either http or https
-    
+
     # create dict
     licenses_by_url = {}
 
@@ -27,11 +29,11 @@ def _url_to_license(licenses, mode='http'):
             url = license['url']
         # Add to dict
         licenses_by_url[url] = license
-        
+
     return licenses_by_url
 
+
 def convert_category_annotations(original_category_info):
-    
     categories = []
     num_categories = len(original_category_info)
     for i in range(num_categories):
@@ -39,17 +41,17 @@ def convert_category_annotations(original_category_info):
         cat['id'] = i + 1
         cat['name'] = original_category_info[i][1]
         cat['original_id'] = original_category_info[i][0]
-        
+
         categories.append(cat)
-    
+
     return categories
 
+
 def _convert_image_annotation_chunk(original_image_metadata, image_dir, licenses, verbose=0):
-    
     # Get dict with license urls
     licenses_by_url_http = _url_to_license(licenses, mode='http')
     licenses_by_url_https = _url_to_license(licenses, mode='https')
-    #Create list
+    # Create list
     images = []
     # Set starting time
     start_time = time.time()
@@ -61,20 +63,20 @@ def _convert_image_annotation_chunk(original_image_metadata, image_dir, licenses
         if verbose > 0:
             if i % 10 == 0:
                 elapsed_time = time.time() - start_time
-                elapsed_hours = elapsed_time//3600
-                elapsed_mins = (elapsed_time%3600)//60
-                total_time = elapsed_time * num_images/i
-                total_hours = total_time//3600
-                total_mins = (total_time%3600)//60
-                print('Image {}/{} Time: {:.0f}h {:.0f}min / {:.0f}h {:.0f}min'.format(i, num_images-1, 
-                                                                elapsed_hours, elapsed_mins, 
-                                                                total_hours, total_mins), 
-                end='\r')
+                elapsed_hours = elapsed_time // 3600
+                elapsed_mins = (elapsed_time % 3600) // 60
+                total_time = elapsed_time * num_images / (i + 1)
+                total_hours = total_time // 3600
+                total_mins = (total_time % 3600) // 60
+                print('Image {}/{} Time: {:.0f}h {:.0f}min / {:.0f}h {:.0f}min'.format(i, num_images - 1,
+                                                                                       elapsed_hours, elapsed_mins,
+                                                                                       total_hours, total_mins),
+                      end='\r')
                 sys.stdout.flush()
-            
+
         # Select image ID as key
         key = original_image_metadata[i][0]
-        
+
         # Copy information
         img = {}
         img['id'] = key
@@ -90,7 +92,7 @@ def _convert_image_annotation_chunk(original_image_metadata, image_dir, licenses
         # Load image to extract height and width
         filename = os.path.join(image_dir, img['file_name'])
         img_data = io.imread(filename)
-        
+
         # catch weird image file type
         if len(img_data.shape) < 2:
             img['height'] = img_data[0].shape[0]
@@ -98,10 +100,10 @@ def _convert_image_annotation_chunk(original_image_metadata, image_dir, licenses
         else:
             img['height'] = img_data.shape[0]
             img['width'] = img_data.shape[1]
-            
+
         # Add to list of images
         images.append(img)
-        
+
     return images
 
 
@@ -115,9 +117,9 @@ def convert_image_annotations(original_image_metadata, image_dir, licenses, mode
     # verbose: 0 = no status info, 1 = some progress info, 50 = info for every finished chunk
     # in feed-forward mode:
     # verbose: 0 = no status info, 1 = progress info every 10 images
-    
+
     if mode == 'parallel':
-        N = 1000 # chunk size
+        N = 1000  # chunk size
         chunks = []
         for i in range(0, len(original_image_metadata), N):
             chunks.append(original_image_metadata[i:i + N])
@@ -125,11 +127,12 @@ def convert_image_annotations(original_image_metadata, image_dir, licenses, mode
         with multiprocessing.Pool(64) as pool:
             images_in_chunks = pool.starmap(chunk_helper, [(c, image_dir, licenses, verbose) for c in chunks])
         images = [chunk[i] for chunk in images_in_chunks for i in range(len(chunk))]
-    
+
     else:
         images = _convert_image_annotation_chunk(original_image_metadata, image_dir, licenses, verbose=verbose)
-        
+
     return images
+
 
 def _image_list_to_dict(images):
     # Helper function to create dict of images by image id 
@@ -137,8 +140,9 @@ def _image_list_to_dict(images):
     imgs = {}
     for img in images:
         imgs[img['id']] = img
-        
+
     return imgs
+
 
 def _category_list_to_dict(categories):
     # Helper function to create dict of categories by integer category id
@@ -146,8 +150,9 @@ def _category_list_to_dict(categories):
     cats = {}
     for cat in categories:
         cats[cat['id']] = cat
-    
+
     return cats
+
 
 def _categories_by_original_ids(cats):
     # Helperfunction to create dict mapping original utf8 category ids to categories
@@ -155,22 +160,22 @@ def _categories_by_original_ids(cats):
     for i in cats.keys():
         key = cats[i]['original_id']
         origCats[key] = cats[i]
-        
+
     return origCats
 
+
 def convert_instance_annotations(original_annotations, images, categories, start_index=0):
-    
     imgs = _image_list_to_dict(images)
     cats = _category_list_to_dict(categories)
     orig_cats = _categories_by_original_ids(cats)
-    
+
     annotations = []
 
     num_instances = len(original_annotations)
     for i in range(0, num_instances):
         # print progress
         if i % 5000 == 0:
-            print('{}/{} annotations processed'.format(i, num_instances-1), end='\r')
+            print('{}/{} annotations processed'.format(i, num_instances - 1), end='\r')
             sys.stdout.flush()
         # set individual instance id
         # use start_index to separate indices between dataset splits
@@ -184,11 +189,12 @@ def convert_instance_annotations(original_annotations, images, categories, start
         ann['category_id'] = orig_cats[original_annotations[csv_line][2]]['id']
         x = float(original_annotations[csv_line][4]) * imgs[image_id]['width']
         y = float(original_annotations[csv_line][6]) * imgs[image_id]['height']
-        dx = (float(original_annotations[csv_line][5]) - float(original_annotations[csv_line][4])) * imgs[image_id]['width']
-        dy = (float(original_annotations[csv_line][7]) - float(original_annotations[csv_line][6])) * imgs[image_id]['height']
+        dx = (float(original_annotations[csv_line][5]) - float(original_annotations[csv_line][4])) * imgs[image_id][
+            'width']
+        dy = (float(original_annotations[csv_line][7]) - float(original_annotations[csv_line][6])) * imgs[image_id][
+            'height']
 
-
-        ann['bbox'] = [round(a, 2) for a in [x , y, dx, dy]]
+        ann['bbox'] = [round(a, 2) for a in [x, y, dx, dy]]
         ann['area'] = round(dx * dy, 2)
         ann['isoccluded'] = int(original_annotations[csv_line][8])
         ann['istruncated'] = int(original_annotations[csv_line][9])
@@ -196,12 +202,11 @@ def convert_instance_annotations(original_annotations, images, categories, start
         ann['isdepiction'] = int(original_annotations[csv_line][11])
         ann['isinside'] = int(original_annotations[csv_line][12])
         annotations.append(ann)
-        
+
     return annotations
 
 
 def convert_openimages_subset(annotation_dir, image_dir, subset, return_data=False):
-    
     # Select correct source files for each subset
     category_sourcefile = 'class-descriptions-boxable.csv'
     if subset == 'train':
@@ -213,7 +218,7 @@ def convert_openimages_subset(annotation_dir, image_dir, subset, return_data=Fal
     elif subset == 'test':
         image_sourcefile = 'test-images-with-rotation.csv'
         annotation_sourcefile = 'test-annotations-bbox.csv'
-    
+
     # Load original annotations
     print('loading original annotations ...', end='\r')
     with open('{}/{}'.format(annotation_dir, category_sourcefile), 'r', encoding='utf-8') as f:
@@ -251,7 +256,7 @@ def convert_openimages_subset(annotation_dir, image_dir, subset, return_data=Fal
 
     # Create dataset class to store annotations
     oi = OpenImages()
-    
+
     # Add basic dataset info
     print('adding basic dataset info')
     oi.dataset['info'] = {'contributos': 'Krasin I., Duerig T., Alldrin N., \
@@ -264,7 +269,7 @@ def convert_openimages_subset(annotation_dir, image_dir, subset, return_data=Fal
                           'url': 'https://storage.googleapis.com/openimages/web/index.html',
                           'version': '4.0',
                           'year': 2018}
-    
+
     # Add license information
     print('adding basic license info')
     oi.dataset['licenses'] = [{'id': 1,
@@ -291,32 +296,32 @@ def convert_openimages_subset(annotation_dir, image_dir, subset, return_data=Fal
                               {'id': 8,
                                'name': 'United States Government Work',
                                'url': 'http://www.usa.gov/copyright.shtml'}]
-    
+
     # Convert category information
     print('converting category info')
     oi.dataset['categories'] = convert_category_annotations(original_category_info)
-    
+
     # Convert image mnetadata
     print('converting image info ...')
-    oi.dataset['images'] = convert_image_annotations(original_image_metadata, 
-                                                           image_dir, 
-                                                           oi.dataset['licenses'], 
-                                                           mode='parallel', 
-                                                           verbose=10)
-    
+    oi.dataset['images'] = convert_image_annotations(original_image_metadata,
+                                                     image_dir,
+                                                     oi.dataset['licenses'],
+                                                     mode='parallel',
+                                                     verbose=10)
+
     # Convert instance annotations
     print('converting annotations ...')
-    oi.dataset['annotations'] = convert_instance_annotations(original_annotations, 
-                                                                   oi.dataset['images'], 
-                                                                   oi.dataset['categories'], 
-                                                                   start_index=0)
-    
+    oi.dataset['annotations'] = convert_instance_annotations(original_annotations,
+                                                             oi.dataset['images'],
+                                                             oi.dataset['categories'],
+                                                             start_index=0)
+
     # Write annotations into .json file
     filename = "{}/{}-annotations-bbox.json".format(annotation_dir, subset)
     print('writing output to {}'.format(filename))
     with open(filename, "w") as write_file:
         json.dump(oi.dataset, write_file)
     print('Done')
-        
+
     if return_data:
         return oi
