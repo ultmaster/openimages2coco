@@ -47,7 +47,7 @@ def convert_category_annotations(original_category_info):
     return categories
 
 
-def _convert_image_annotation_chunk(original_image_metadata, image_dir, licenses, verbose=0):
+def _convert_image_annotation_chunk(original_image_metadata, image_dir, licenses, verbose=0, idx=0):
     # Get dict with license urls
     licenses_by_url_http = _url_to_license(licenses, mode='http')
     licenses_by_url_https = _url_to_license(licenses, mode='https')
@@ -55,6 +55,8 @@ def _convert_image_annotation_chunk(original_image_metadata, image_dir, licenses
     images = []
     # Set starting time
     start_time = time.time()
+    print("Running on chunk %d" % idx)
+    sys.stdout.flush()
 
     # loop through entries skipping title line
     num_images = len(original_image_metadata)
@@ -91,7 +93,10 @@ def _convert_image_annotation_chunk(original_image_metadata, image_dir, licenses
 
         # Load image to extract height and width
         filename = os.path.join(image_dir, img['file_name'])
-        img_data = io.imread(filename)
+        try:
+            img_data = io.imread(filename)
+        except:
+            continue
 
         # catch weird image file type
         if len(img_data.shape) < 2:
@@ -119,13 +124,14 @@ def convert_image_annotations(original_image_metadata, image_dir, licenses, mode
     # verbose: 0 = no status info, 1 = progress info every 10 images
 
     if mode == 'parallel':
-        N = 1000  # chunk size
+        N = 10000  # chunk size
         chunks = []
         for i in range(0, len(original_image_metadata), N):
             chunks.append(original_image_metadata[i:i + N])
+        print("Total: %d chunks" % len(chunks))
 
         with multiprocessing.Pool(64) as pool:
-            images_in_chunks = pool.starmap(chunk_helper, [(c, image_dir, licenses, verbose) for c in chunks])
+            images_in_chunks = pool.starmap(chunk_helper, [(c, image_dir, licenses, 0, i) for i, c in enumerate(chunks)])
         images = [chunk[i] for chunk in images_in_chunks for i in range(len(chunk))]
 
     else:
@@ -185,6 +191,8 @@ def convert_instance_annotations(original_annotations, images, categories, start
         ann['id'] = key
         image_id = original_annotations[csv_line][0]
         ann['image_id'] = image_id
+        if image_id not in imgs:
+            continue
         ann['original_category_id'] = original_annotations[csv_line][2]
         ann['category_id'] = orig_cats[original_annotations[csv_line][2]]['id']
         x = float(original_annotations[csv_line][4]) * imgs[image_id]['width']
@@ -236,7 +244,7 @@ def convert_openimages_subset(annotation_dir, image_dir, subset, return_data=Fal
         original_image_metadata = []
         for i, row in enumerate(csv_f):
             if i == 0: continue
-            if i % 1000 == 0:
+            if i % 10000 == 0:
                 print("Source file progress:", i)
                 sys.stdout.flush()
             total_count += 1
@@ -253,7 +261,7 @@ def convert_openimages_subset(annotation_dir, image_dir, subset, return_data=Fal
         original_annotations = []
         for i, row in enumerate(csv_f):
             if i == 0: continue
-            if i % 1000 == 0:
+            if i % 10000 == 0:
                 print("Annotation file progress:", i)
                 sys.stdout.flush()
             total_count += 1
