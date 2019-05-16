@@ -10,7 +10,6 @@ import json
 import time
 import numpy as np
 import skimage.io as io
-from joblib import Parallel, delayed
 from openimages import OpenImages
 
 def _url_to_license(licenses, mode='http'):
@@ -31,15 +30,15 @@ def _url_to_license(licenses, mode='http'):
         
     return licenses_by_url
 
-def convert_category_annotations(orginal_category_info):
+def convert_category_annotations(original_category_info):
     
     categories = []
-    num_categories = len(orginal_category_info)
+    num_categories = len(original_category_info)
     for i in range(num_categories):
         cat = {}
         cat['id'] = i + 1
-        cat['name'] = orginal_category_info[i][1]
-        cat['original_id'] = orginal_category_info[i][0]
+        cat['name'] = original_category_info[i][1]
+        cat['original_id'] = original_category_info[i][0]
         
         categories.append(cat)
     
@@ -57,7 +56,7 @@ def _convert_image_annotation_chunk(original_image_metadata, image_dir, licenses
 
     # loop through entries skipping title line
     num_images = len(original_image_metadata)
-    for i in range(1,num_images):
+    for i in range(0, num_images):
         # Print status info
         if verbose > 0:
             if i % 10 == 0:
@@ -168,7 +167,7 @@ def convert_instance_annotations(original_annotations, images, categories, start
     annotations = []
 
     num_instances = len(original_annotations)
-    for i in range(1,num_instances):
+    for i in range(0, num_instances):
         # print progress
         if i % 5000 == 0:
             print('{}/{} annotations processed'.format(i, num_instances-1), end='\r')
@@ -228,8 +227,9 @@ def convert_openimages_subset(annotation_dir, image_dir, subset, return_data=Fal
         csv_f = csv.reader(f)
         original_image_metadata = []
         for i, row in enumerate(csv_f):
+            if i == 0: continue
             total_count += 1
-            if i > 0 and not os.path.exists(os.path.join(image_dir, row[0] + ".jpg")):
+            if not os.path.exists(os.path.join(image_dir, row[0] + ".jpg")):
                 dirty_count += 1
                 continue
             original_image_metadata.append(row)
@@ -240,8 +240,9 @@ def convert_openimages_subset(annotation_dir, image_dir, subset, return_data=Fal
         csv_f = csv.reader(f)
         original_annotations = []
         for i, row in enumerate(csv_f):
+            if i == 0: continue
             total_count += 1
-            if i > 0 and not os.path.exists(os.path.join(image_dir, row[0] + ".jpg")):
+            if not os.path.exists(os.path.join(image_dir, row[0] + ".jpg")):
                 dirty_count += 1
                 continue
             original_annotations.append(row)
