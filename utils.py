@@ -175,7 +175,7 @@ def convert_instance_annotations(original_annotations, images, categories, start
     for i in range(0, num_instances):
         # print progress
         if i % 5000 == 0:
-            print('{}/{} annotations processed'.format(i, num_instances - 1), end='\r')
+            print('{}/{} annotations processed'.format(i, num_instances - 1))
             sys.stdout.flush()
         # set individual instance id
         # use start_index to separate indices between dataset splits
@@ -319,9 +319,11 @@ def convert_openimages_subset(annotation_dir, image_dir, subset, return_data=Fal
     # Write annotations into .json file
     filename = "{}/{}-annotations-bbox.json".format(annotation_dir, subset)
     print('writing output to {}'.format(filename))
+    sys.stdout.flush()
     with open(filename, "w") as write_file:
         json.dump(oi.dataset, write_file)
     print('Done')
+    sys.stdout.flush()
 
     if return_data:
         return oi
