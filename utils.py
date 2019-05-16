@@ -227,6 +227,8 @@ def convert_openimages_subset(annotation_dir, image_dir, subset, return_data=Fal
         original_category_info = []
         for row in csv_f:
             original_category_info.append(row)
+    print("First step done")
+    sys.stdout.flush()
 
     dirty_count, total_count = 0, 0
     with open('{}/{}'.format(annotation_dir, image_sourcefile), 'r', encoding='utf-8') as f:
@@ -234,6 +236,9 @@ def convert_openimages_subset(annotation_dir, image_dir, subset, return_data=Fal
         original_image_metadata = []
         for i, row in enumerate(csv_f):
             if i == 0: continue
+            if i % 1000 == 0:
+                print("Source file progress:", i)
+                sys.stdout.flush()
             total_count += 1
             if not os.path.exists(os.path.join(image_dir, row[0] + ".jpg")):
                 dirty_count += 1
@@ -248,6 +253,9 @@ def convert_openimages_subset(annotation_dir, image_dir, subset, return_data=Fal
         original_annotations = []
         for i, row in enumerate(csv_f):
             if i == 0: continue
+            if i % 1000 == 0:
+                print("Annotation file progress:", i)
+                sys.stdout.flush()
             total_count += 1
             if not os.path.exists(os.path.join(image_dir, row[0] + ".jpg")):
                 dirty_count += 1
