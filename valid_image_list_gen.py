@@ -20,7 +20,7 @@ data_dir = args.path
 annotation_dir = os.path.join(data_dir, 'annotations')
 
 S = set()
-for subset in ['val', 'test', 'eval']:
+for subset in ['val', 'test', 'train']:
     filename = os.path.join(annotation_dir, "{}-annotations-bbox.json".format(subset))
     with open(filename, "r") as read_file:
         data = json.load(read_file)
