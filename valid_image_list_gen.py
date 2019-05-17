@@ -1,6 +1,7 @@
 import argparse
 import json
 import os
+import sys
 
 
 def parse_args():
@@ -19,15 +20,16 @@ args = parse_args()
 data_dir = args.path
 annotation_dir = os.path.join(data_dir, 'annotations')
 
-S = set()
+S = dict()
 for subset in ['val', 'test', 'train']:
     filename = os.path.join(annotation_dir, "{}-annotations-bbox.json".format(subset))
     with open(filename, "r") as read_file:
         data = json.load(read_file)
     for img in data["images"]:
-        S.add(img["id"])
+        S[img["id"]] = (img["width"], img["height"])
     print(subset, 'done')
+    sys.stdout.flush()
 
-with open(os.path.join(annotation_dir, "valid_images.txt"), "w") as f:
-    for t in sorted(list(S)):
-        f.write(t + "\n")
+with open(os.path.join(annotation_dir, "valid_images.csv"), "w") as f:
+    for i, t in enumerate(sorted(S.keys())):
+        f.write("%s,%d,%d\n" % (t, S[t][0], S[t][1]))
